@@ -17,3 +17,7 @@ pub const ERR_CANT_CLAIM: &str = "Stream can't be claimed";
 pub const ERR_CLIFF_TOO_BIG: &str = "Cliff period bigger than stream duration";
 pub const ERR_BROKER_FEE_TOO_BIG: &str = "Broker fee can't be bigger than 10%";
 pub const ERR_TOKEN_ALREADY_ISSUED: &str = "Token already issued";
+pub const ERR_TOKEN_NOT_ISSUED: &str = "Token not issued";
+pub const ERR_INVALID_NFT_TOKEN: &str = "Invalid token";
+pub const ERR_CANCEL_ONE_STREAM: &str = "You can only cancel one stream at a time";
+pub const ERR_INVALID_NFT_TOKEN_NONCE: &str = "Invalid token nonce";

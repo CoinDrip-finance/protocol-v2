@@ -33,8 +33,5 @@ pub trait EventsModule {
     );
 
     #[event("renounceCancelStream")]
-    fn renounce_cancel_stream_event(
-        &self,
-        #[indexed] stream_id: u64
-    );
-}  
+    fn renounce_cancel_stream_event(&self, #[indexed] stream_id: u64);
+}

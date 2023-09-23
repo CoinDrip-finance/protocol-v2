@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           15
-// Async Callback (empty):               1
-// Total number of exported functions:  17
+// Endpoints:                           16
+// Async Callback:                       1
+// Total number of exported functions:  18
 
 #![no_std]
 
@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         getStreamData => get_stream
+        getStreamByNft => get_stream_by_nft
         getLastStreamId => last_stream_id
         getProtocolFee => protocol_fee
         createStreamDuration => create_stream_duration
@@ -30,14 +31,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         recipientBalance => recipient_balance
         senderBalance => sender_balance
         claimFromStream => claim_from_stream
-        claimFromStreamMultiple => claim_from_stream_multiple
         cancelStream => cancel_stream
         claimFromStreamAfterCancel => claim_from_stream_after_cancel
         renounceCancelStream => renounce_cancel_stream
         setProtocolFee => set_protocol_fee
         removeProtocolFee => remove_protocol_fee
         getStatusOf => status_of
+        issueToken => issue_token
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback_empty! {}
+multiversx_sc_wasm_adapter::async_callback! { coindrip }

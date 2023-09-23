@@ -33,8 +33,9 @@ pub struct Segment<M: ManagedTypeApi> {
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Stream<M: ManagedTypeApi> {
+    pub id: u64,
     pub sender: ManagedAddress<M>,
-    pub recipient: ManagedAddress<M>,
+    pub nft_nonce: u64,
     pub payment_token: EgldOrEsdtTokenIdentifier<M>,
     pub payment_nonce: u64,
     pub deposit: BigUint<M>,
@@ -50,7 +51,7 @@ pub struct Stream<M: ManagedTypeApi> {
 #[derive(TopEncode, TopDecode, TypeAbi, ManagedVecItem, NestedEncode, NestedDecode, Clone)]
 pub struct StreamClaimResult<M: ManagedTypeApi> {
     pub stream_id: u64,
-    pub recipient: ManagedAddress<M>,
+    pub stream_nft_nonce: u64,
     pub payment_token: EgldOrEsdtTokenIdentifier<M>,
     pub payment_nonce: u64,
     pub claimed_amount: BigUint<M>,
@@ -74,6 +75,16 @@ pub trait StorageModule {
 
     #[storage_mapper("streamById")]
     fn stream_by_id(&self, stream_id: u64) -> SingleValueMapper<Stream<Self::Api>>;
+
+    #[storage_mapper("streamByNft")]
+    fn stream_by_nft(&self, nft_nonce: u64) -> SingleValueMapper<u64>;
+
+    #[view(getStreamByNft)]
+    fn get_stream_by_nft(&self, nonce: u64) -> Stream<Self::Api> {
+        let stream_id = self.stream_by_nft(nonce).get();
+        require!(stream_id > 0, ERR_INVALID_STREAM);
+        self.get_stream(stream_id)
+    }
 
     #[view(getLastStreamId)]
     #[storage_mapper("lastStreamId")]
