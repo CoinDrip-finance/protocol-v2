@@ -222,7 +222,7 @@ pub trait SvgModule:
         let stream_duration_days = stream_duration_seconds / 60 / 60 / 24;
         let duration_svg = self.generate_duration_svg(stream_duration_days);
 
-        let stream_id_svg = self.generate_stream_id_svg(stream.id);
+        let stream_id_svg = self.generate_stream_id_svg(stream.nft_nonce);
 
         let svg = self.generate_svg(&token_svg, &cancelable_svg, &duration_svg, &stream_id_svg);
 

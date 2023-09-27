@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           16
+// Endpoints:                           14
 // Async Callback:                       1
-// Total number of exported functions:  18
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -23,8 +23,6 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         getStreamData => get_stream
-        getStreamByNft => get_stream_by_nft
-        getLastStreamId => last_stream_id
         getProtocolFee => protocol_fee
         createStreamDuration => create_stream_duration
         createStream => create_stream

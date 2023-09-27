@@ -1,6 +1,7 @@
 use crate::{
     errors::{
-        ERR_BROKER_FEE_TOO_BIG, ERR_CLIFF_TOO_BIG, ERR_END_TIME, ERR_START_TIME,
+        ERR_BROKER_FEE_TOO_BIG, ERR_CLIFF_TOO_BIG, ERR_END_TIME, ERR_INVALID_SEGMENTS_DEPOSIT,
+        ERR_INVALID_SEGMENTS_DURATION, ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO, ERR_START_TIME,
         ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC, ERR_ZERO_DEPOSIT,
     },
     storage::{BrokerFee, Exponent, Segment, Stream},
@@ -67,8 +68,7 @@ pub trait CreateStreamModule:
         require!(start_time >= current_time, ERR_START_TIME);
         require!(end_time > start_time, ERR_END_TIME);
 
-        let stream_id = self.last_stream_id().get() + 1;
-        self.last_stream_id().set(&stream_id);
+        let stream_id = self.get_last_stream_id() + 1;
 
         let can_cancel: bool = (&can_cancel_opt.into_option()).unwrap_or(true);
 
@@ -114,30 +114,17 @@ pub trait CreateStreamModule:
         };
         segments.push(first_segment);
 
-        // TODO: Validate segments
+        self.validate_stream_segments(&token_amount, end_time - start_time, &segments);
 
         let cliff = cliff_opt.into_option().unwrap_or_default();
         require!(start_time + cliff < end_time, ERR_CLIFF_TOO_BIG);
 
-        // TODO: Update event with nft
-        self.create_stream_event(
-            stream_id,
-            &caller,
-            &recipient,
-            &token_identifier,
-            token_nonce,
-            &stream_amount,
-            start_time,
-            end_time,
-        );
-
         let mut stream = Stream {
-            id: stream_id,
-            sender: caller,
-            nft_nonce: 0,
-            payment_token: token_identifier,
+            sender: caller.clone(),
+            nft_nonce: stream_id,
+            payment_token: token_identifier.clone(),
             payment_nonce: token_nonce,
-            deposit: stream_amount,
+            deposit: stream_amount.clone(),
             claimed_amount: BigUint::zero(),
             can_cancel,
             start_time,
@@ -148,11 +135,8 @@ pub trait CreateStreamModule:
         };
 
         let stream_nft_nonce = self.mint_stream_nft(&stream);
-        stream.nft_nonce = stream_nft_nonce;
 
         self.stream_by_id(stream_id).set(&stream);
-
-        self.stream_by_nft(stream_nft_nonce).set(stream_id);
 
         self.send().direct_esdt(
             &recipient,
@@ -161,6 +145,46 @@ pub trait CreateStreamModule:
             &BigUint::from(1u64),
         );
 
+        self.create_stream_event(
+            &caller,
+            &recipient,
+            self.stream_nft_token().get_token_id_ref(),
+            stream_nft_nonce,
+            &token_identifier,
+            token_nonce,
+            &stream_amount,
+            start_time,
+            end_time,
+            can_cancel,
+            cliff,
+        );
+
+        // TODO: Check to see what props to return here
         stream_id
+    }
+
+    fn validate_stream_segments(
+        &self,
+        deposit: &BigUint,
+        duration: u64,
+        segments: &ManagedVec<Segment<Self::Api>>,
+    ) {
+        let mut segments_duration = 0u64;
+        let mut segments_total_deposit = BigUint::zero();
+        for segment in segments {
+            segments_duration += segment.duration;
+            segments_total_deposit += segment.amount;
+
+            require!(
+                segment.exponent.denominator > 0,
+                ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO
+            );
+        }
+
+        require!(segments_duration == duration, ERR_INVALID_SEGMENTS_DURATION);
+        require!(
+            &segments_total_deposit == deposit,
+            ERR_INVALID_SEGMENTS_DEPOSIT
+        );
     }
 }

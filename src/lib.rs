@@ -10,7 +10,7 @@ mod events;
 mod owner;
 mod status;
 pub mod storage;
-mod stream_nft;
+pub mod stream_nft;
 mod svg;
 
 #[multiversx_sc::contract]

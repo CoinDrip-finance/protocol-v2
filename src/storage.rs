@@ -4,6 +4,12 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq)]
+pub enum StreamRole {
+    Sender,
+    Recipient,
+}
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq)]
 pub enum Status {
     Pending,
     InProgress,
@@ -12,7 +18,7 @@ pub enum Status {
     Finished,
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone)]
 pub struct BalancesAfterCancel<M: ManagedTypeApi> {
     pub sender_balance: BigUint<M>,
     pub recipient_balance: BigUint<M>,
@@ -31,9 +37,8 @@ pub struct Segment<M: ManagedTypeApi> {
     pub duration: u64,
 }
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, TypeAbi, Clone)]
 pub struct Stream<M: ManagedTypeApi> {
-    pub id: u64,
     pub sender: ManagedAddress<M>,
     pub nft_nonce: u64,
     pub payment_token: EgldOrEsdtTokenIdentifier<M>,
@@ -46,16 +51,6 @@ pub struct Stream<M: ManagedTypeApi> {
     pub cliff: u64,
     pub segments: ManagedVec<M, Segment<M>>,
     pub balances_after_cancel: Option<BalancesAfterCancel<M>>,
-}
-
-#[derive(TopEncode, TopDecode, TypeAbi, ManagedVecItem, NestedEncode, NestedDecode, Clone)]
-pub struct StreamClaimResult<M: ManagedTypeApi> {
-    pub stream_id: u64,
-    pub stream_nft_nonce: u64,
-    pub payment_token: EgldOrEsdtTokenIdentifier<M>,
-    pub payment_nonce: u64,
-    pub claimed_amount: BigUint<M>,
-    pub is_finalized: bool,
 }
 
 #[derive(TopEncode, TopDecode, TypeAbi, ManagedVecItem, NestedEncode, NestedDecode, Clone)]
@@ -73,22 +68,15 @@ pub trait StorageModule {
         stream_mapper.get()
     }
 
-    #[storage_mapper("streamById")]
-    fn stream_by_id(&self, stream_id: u64) -> SingleValueMapper<Stream<Self::Api>>;
-
-    #[storage_mapper("streamByNft")]
-    fn stream_by_nft(&self, nft_nonce: u64) -> SingleValueMapper<u64>;
-
-    #[view(getStreamByNft)]
-    fn get_stream_by_nft(&self, nonce: u64) -> Stream<Self::Api> {
-        let stream_id = self.stream_by_nft(nonce).get();
-        require!(stream_id > 0, ERR_INVALID_STREAM);
-        self.get_stream(stream_id)
+    fn get_last_stream_id(&self) -> u64 {
+        self.blockchain().get_current_esdt_nft_nonce(
+            &self.blockchain().get_sc_address(),
+            self.stream_nft_token().get_token_id_ref(),
+        )
     }
 
-    #[view(getLastStreamId)]
-    #[storage_mapper("lastStreamId")]
-    fn last_stream_id(&self) -> SingleValueMapper<u64>;
+    #[storage_mapper("streamById")]
+    fn stream_by_id(&self, stream_id: u64) -> SingleValueMapper<Stream<Self::Api>>;
 
     #[storage_mapper("streamNftToken")]
     fn stream_nft_token(&self) -> NonFungibleTokenMapper<Self::Api>;

@@ -1,9 +1,14 @@
-use multiversx_sc::types::{Address};
-use multiversx_sc_scenario::{rust_biguint, testing_framework::*, DebugApi};
 use coindrip::*;
+use coindrip::{storage::StorageModule, stream_nft::StreamNftModule};
+use multiversx_sc::storage::mappers::StorageTokenWrapper;
+use multiversx_sc::types::EsdtLocalRole::*;
+use multiversx_sc::types::{Address, EsdtLocalRole};
+use multiversx_sc_scenario::{managed_token_id, rust_biguint, testing_framework::*, DebugApi};
 
 const WASM_PATH: &'static str = "output/coindrip.wasm";
 pub const TOKEN_ID: &[u8] = b"STRM-df6f26";
+
+pub const STREAM_NFT_TOKEN_ID: &[u8] = b"DRIP-df6f26";
 
 pub struct ContractSetup<ContractObjBuilder>
 where
@@ -35,7 +40,7 @@ where
     let first_user_address = blockchain_wrapper.create_user_account(&rust_zero);
     let second_user_address = blockchain_wrapper.create_user_account(&rust_zero);
     let third_user_address = blockchain_wrapper.create_user_account(&rust_zero);
-    
+
     let cf_wrapper = blockchain_wrapper.create_sc_account(
         &rust_zero,
         Some(&owner_address),
@@ -43,9 +48,28 @@ where
         WASM_PATH,
     );
 
+    let local_roles: [EsdtLocalRole; 8] = [
+        Mint,
+        Burn,
+        NftCreate,
+        NftAddQuantity,
+        NftBurn,
+        NftAddUri,
+        NftUpdateAttributes,
+        Transfer,
+    ];
+    blockchain_wrapper.set_esdt_local_roles(
+        cf_wrapper.address_ref(),
+        STREAM_NFT_TOKEN_ID,
+        &local_roles,
+    );
+
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
             sc.init();
+
+            sc.stream_nft_token()
+                .set_token_id(managed_token_id!(STREAM_NFT_TOKEN_ID));
         })
         .assert_ok();
 

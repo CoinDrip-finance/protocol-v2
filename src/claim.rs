@@ -1,18 +1,18 @@
 multiversx_sc::imports!();
 
-const MAX_CLAIMS_PER_TX: usize = 250;
-
 use crate::{
-    errors::{
-        ERR_CANT_CLAIM, ERR_CLAIM_FROM_TOO_MANY_STREAMS, ERR_INVALID_NFT_TOKEN,
-        ERR_ONLY_RECIPIENT_CLAIM, ERR_ZERO_CLAIM,
-    },
-    storage::{Segment, Status, StreamClaimResult},
+    errors::{ERR_CANT_CLAIM, ERR_ZERO_CLAIM},
+    storage::{Segment, Status, StreamRole},
 };
 
 #[multiversx_sc::module]
 pub trait ClaimModule:
-    crate::storage::StorageModule + crate::events::EventsModule + crate::status::StatusModule
+    crate::storage::StorageModule
+    + crate::events::EventsModule
+    + crate::status::StatusModule
+    + crate::stream_nft::StreamNftModule
+    + crate::svg::SvgModule
+    + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     fn compute_segment_value(
         &self,
@@ -97,31 +97,48 @@ pub trait ClaimModule:
         stream.deposit - self.recipient_balance(stream_id) - stream.claimed_amount
     }
 
+    fn is_stream_finalized(&self, stream_id: u64) -> bool {
+        let stream = self.get_stream(stream_id);
+        let current_time = self.blockchain().get_block_timestamp();
+        let is_finalized = current_time >= stream.end_time;
+        return is_finalized;
+    }
+
     /// This endpoint can be used by the recipient of the stream to claim the stream amount of tokens
     #[payable("*")]
     #[endpoint(claimFromStream)]
-    fn claim_from_stream(&self) -> StreamClaimResult<Self::Api> {
-        let stream_nft = self.call_value().single_esdt();
-        require!(
-            stream_nft.token_identifier == self.stream_nft_token().get_token_id(),
-            ERR_INVALID_NFT_TOKEN
-        );
-        let mut stream = self.get_stream_by_nft(stream_nft.token_nonce);
-        let stream_id = stream.id;
+    fn claim_from_stream(&self, stream_id: u64) {
+        // Validate the NFT and retrieve the associated stream
+        let (_, mut stream) =
+            self.require_valid_stream_nft(stream_id, OptionalValue::Some(StreamRole::Recipient));
 
+        // Check the stream status
         let current_status = self.status_of(stream_id);
         let is_warm = self.is_warm(stream_id);
         require!(is_warm || current_status == Status::Settled, ERR_CANT_CLAIM);
 
-        let caller = self.blockchain().get_caller();
-
+        // Get and validate the claimable amount
         let amount = self.recipient_balance(stream_id);
-
         require!(amount > 0, ERR_ZERO_CLAIM);
 
-        stream.claimed_amount += &amount;
-        self.stream_by_id(stream_id).set(&stream);
+        let is_finalized = self.is_stream_finalized(stream_id);
+        let caller = self.blockchain().get_caller();
 
+        if is_finalized {
+            self.remove_stream(stream_id, true);
+        } else {
+            stream.claimed_amount += &amount;
+            self.stream_by_id(stream_id).set(&stream);
+
+            self.send().direct_esdt(
+                &caller,
+                self.stream_nft_token().get_token_id_ref(),
+                stream.nft_nonce,
+                &BigUint::from(1u32),
+            );
+        }
+
+        // Send claimed tokens
         self.send().direct(
             &caller,
             &stream.payment_token,
@@ -129,18 +146,16 @@ pub trait ClaimModule:
             &amount,
         );
 
-        let new_status = self.status_of(stream_id);
-        let is_finalized = new_status == Status::Finished;
-
         self.claim_from_stream_event(stream_id, &amount, is_finalized);
 
-        StreamClaimResult {
-            stream_id,
-            stream_nft_nonce: stream_nft.token_nonce,
-            payment_token: stream.payment_token,
-            payment_nonce: stream.payment_nonce,
-            claimed_amount: amount,
-            is_finalized,
+        // TODO: Check to see what props to return here
+    }
+
+    fn remove_stream(&self, stream_id: u64, with_burn: bool) {
+        if with_burn {
+            self.burn_stream_nft(stream_id);
         }
+
+        self.stream_by_id(stream_id).clear();
     }
 }

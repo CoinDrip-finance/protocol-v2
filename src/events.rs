@@ -1,19 +1,21 @@
 multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("createStream")]
     fn create_stream_event(
         &self,
-        #[indexed] stream_id: u64,
         #[indexed] sender: &ManagedAddress,
         #[indexed] recipient: &ManagedAddress,
+        #[indexed] stream_token_identifier: &TokenIdentifier,
+        #[indexed] stream_token_nonce: u64,
         #[indexed] payment_token: &EgldOrEsdtTokenIdentifier,
         #[indexed] payment_nonce: u64,
         #[indexed] deposit: &BigUint,
         #[indexed] start_time: u64,
         #[indexed] end_time: u64,
+        #[indexed] can_cancel: bool,
+        #[indexed] cliff: u64,
     );
 
     #[event("claimFromStream")]

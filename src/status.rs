@@ -1,13 +1,19 @@
 use crate::storage::Status;
 
 multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait StatusModule: crate::storage::StorageModule {
     #[view(getStatusOf)]
     fn status_of(&self, stream_id: u64) -> Status {
-        let stream = self.get_stream(stream_id);
+        let stream_mapper = self.stream_by_id(stream_id);
+        let last_stream_id = self.get_last_stream_id();
+
+        if stream_mapper.is_empty() && stream_id <= last_stream_id {
+            return Status::Finished;
+        }
+
+        let stream = stream_mapper.get();
 
         if stream.balances_after_cancel.is_some() {
             return Status::Canceled;
@@ -22,11 +28,7 @@ pub trait StatusModule: crate::storage::StorageModule {
             return Status::InProgress;
         }
 
-        if stream.deposit > stream.claimed_amount {
-            return Status::Settled;
-        }
-
-        Status::Finished
+        Status::Settled
     }
 
     fn is_warm(&self, stream_id: u64) -> bool {
@@ -34,9 +36,10 @@ pub trait StatusModule: crate::storage::StorageModule {
         stream_status == Status::Pending || stream_status == Status::InProgress
     }
 
-
     fn is_cold(&self, stream_id: u64) -> bool {
         let stream_status = self.status_of(stream_id);
-        stream_status == Status::Canceled || stream_status == Status::Settled || stream_status == Status::Finished
+        stream_status == Status::Canceled
+            || stream_status == Status::Settled
+            || stream_status == Status::Finished
     }
 }
