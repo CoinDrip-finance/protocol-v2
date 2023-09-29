@@ -12,6 +12,7 @@ pub trait EventsModule {
         #[indexed] payment_token: &EgldOrEsdtTokenIdentifier,
         #[indexed] payment_nonce: u64,
         #[indexed] deposit: &BigUint,
+        #[indexed] deposit_with_fees: &BigUint,
         #[indexed] start_time: u64,
         #[indexed] end_time: u64,
         #[indexed] can_cancel: bool,

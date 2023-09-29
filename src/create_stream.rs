@@ -114,12 +114,12 @@ pub trait CreateStreamModule:
         };
         segments.push(first_segment);
 
-        self.validate_stream_segments(&token_amount, end_time - start_time, &segments);
+        self.validate_stream_segments(&stream_amount, end_time - start_time, &segments);
 
         let cliff = cliff_opt.into_option().unwrap_or_default();
         require!(start_time + cliff < end_time, ERR_CLIFF_TOO_BIG);
 
-        let mut stream = Stream {
+        let stream = Stream {
             sender: caller.clone(),
             nft_nonce: stream_id,
             payment_token: token_identifier.clone(),
@@ -153,6 +153,7 @@ pub trait CreateStreamModule:
             &token_identifier,
             token_nonce,
             &stream_amount,
+            &token_amount,
             start_time,
             end_time,
             can_cancel,
