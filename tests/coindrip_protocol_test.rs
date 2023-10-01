@@ -7,14 +7,17 @@ use coindrip::{
         ERR_INVALID_STREAM, ERR_START_TIME, ERR_STREAM_IS_NOT_CANCELLED, ERR_STREAM_TO_CALLER,
         ERR_STREAM_TO_SC, ERR_ZERO_CLAIM, ERR_ZERO_DEPOSIT,
     },
-    storage::StorageModule,
+    storage::{StorageModule, StreamAttributes},
     CoinDrip,
 };
 use multiversx_sc::{
     codec::{multi_types::OptionalValue, Empty},
-    types::BigUint,
+    types::{BigUint, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment, ManagedAddress},
 };
-use multiversx_sc_scenario::{managed_address, rust_biguint};
+use multiversx_sc_scenario::{
+    managed_address, managed_biguint, managed_egld_token_id, managed_token_id, rust_biguint,
+    DebugApi,
+};
 
 mod contract_setup;
 use contract_setup::{setup_contract, STREAM_NFT_TOKEN_ID, TOKEN_ID};
@@ -92,7 +95,18 @@ fn create_stream_test() {
         STREAM_NFT_TOKEN_ID,
         1,
         &rust_biguint!(1),
-        Some(&Empty),
+        Some(&StreamAttributes::<DebugApi> {
+            sender: managed_address!(&owner_address),
+            payment_token: EgldOrEsdtTokenIdentifier::esdt(managed_token_id!(TOKEN_ID)),
+            payment_nonce: 1u64,
+            deposit: managed_biguint!(3000u64),
+            remaining_balance: managed_biguint!(3000u64),
+            can_cancel: true,
+            start_time: current_timestamp + 60,
+            end_time: current_timestamp + 60 * 60,
+            cliff: 0,
+            is_canceled: false,
+        }),
     );
 
     // Create an invalid stream of 0 tokens
