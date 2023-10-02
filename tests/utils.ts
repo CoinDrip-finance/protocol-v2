@@ -33,6 +33,24 @@ export const getStream = async (ctx: TestContext, streamId: number) => {
   return streamDecoder.topDecode(returnDataStream[0]);
 };
 
+export const getRecipientBalance = async (ctx: TestContext, streamId: number) => {
+  const {
+    returnData: returnDataStream,
+    returnCode,
+    returnMessage,
+  } = await ctx.world.query({
+    callee: ctx.contract,
+    funcName: "recipientBalance",
+    funcArgs: [e.U64(streamId)],
+  });
+
+  if (parseInt(returnCode) > 0) {
+    throw Error(returnMessage);
+  }
+
+  return d.U().topDecode(returnDataStream[0]);
+};
+
 export const claimFromStream = (ctx: TestContext, streamId: number): TxResultPromise<CallContractTxResult> => {
   return ctx.recipient_wallet.callContract({
     callee: ctx.contract,
