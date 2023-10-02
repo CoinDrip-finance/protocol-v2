@@ -33,11 +33,7 @@ export const getStream = async (ctx: TestContext, streamId: number) => {
   return streamDecoder.topDecode(returnDataStream[0]);
 };
 
-export const claimFromStream = (
-  ctx: TestContext,
-  streamId: number,
-  streamNftNonce = 1
-): TxResultPromise<CallContractTxResult> => {
+export const claimFromStream = (ctx: TestContext, streamId: number): TxResultPromise<CallContractTxResult> => {
   return ctx.recipient_wallet.callContract({
     callee: ctx.contract,
     gasLimit: 50_000_000,
@@ -47,11 +43,37 @@ export const claimFromStream = (
     esdts: [
       {
         id: ctx.stream_nft_token_identifier,
-        nonce: streamNftNonce,
+        nonce: streamId,
         amount: 1,
       },
     ],
   });
+};
+
+export const cancelStream = (
+  ctx: TestContext,
+  streamId: number,
+  isSender: boolean,
+  withClaim: boolean
+): TxResultPromise<CallContractTxResult> => {
+  const call = {
+    callee: ctx.contract,
+    gasLimit: 50_000_000,
+    funcName: "cancelStream",
+    funcArgs: [e.U64(streamId), e.Bool(withClaim)],
+    value: 0,
+  };
+  if (!isSender) {
+    call["esdts"] = [
+      {
+        id: ctx.stream_nft_token_identifier,
+        nonce: streamId,
+        amount: 1,
+      },
+    ];
+  }
+  const wallet = isSender ? ctx.sender_wallet : ctx.recipient_wallet;
+  return wallet.callContract(call);
 };
 
 export const requireValidStreamNft = async (ctx: TestContext, amount = 1, nonce = 1, attrs?: TupleEncodable) => {

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { e } from 'xsuite';
+import { assertAccount, e } from 'xsuite';
 
 import { ERR_INVALID_ROLE, ERR_INVALID_STREAM, ERR_ZERO_CLAIM } from './errors';
 import { claimFromStream, createStream, getStream, requireEgldBalance, requireValidStreamNft } from './utils';
@@ -48,4 +48,8 @@ test("Successful claim", async (ctx) => {
   await requireValidStreamNft(ctx, 0);
   // Check if stream was removed from storage
   await expect(getStream(ctx, streamId)).rejects.toThrowError(ERR_INVALID_STREAM);
+
+  assertAccount(await ctx.contract.getAccountWithKvs(), {
+    hasKvs: [e.kvs.Mapper("streamById", e.U64(streamId)).Value(null)],
+  });
 });
