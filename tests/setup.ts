@@ -35,7 +35,13 @@ beforeEach(async (ctx) => {
       e.kvs.Esdts([
         {
           id: STREAM_NFT_TOKEN_IDENTIFIER,
-          roles: ["ESDTRoleLocalBurn", "ESDTRoleLocalMint", "ESDTRoleNFTCreate", "ESDTRoleNFTUpdateAttributes"],
+          roles: [
+            "ESDTRoleLocalBurn",
+            "ESDTRoleLocalMint",
+            "ESDTRoleNFTCreate",
+            "ESDTRoleNFTUpdateAttributes",
+            "ESDTRoleNFTBurn",
+          ],
         },
       ]),
     ],
