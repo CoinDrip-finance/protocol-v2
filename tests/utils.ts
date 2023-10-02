@@ -81,12 +81,11 @@ export const requireValidStreamNft = async (ctx: TestContext, amount = 1, nonce 
     hasKvs: [e.kvs.Esdts([{ id: ctx.stream_nft_token_identifier, nonce, amount }])],
   });
 
-  // TODO: Enable this after it's fixed
-  // if (attrs) {
-  //   assertAccount(await ctx.world.sysAcc.getAccountWithKvs(), {
-  //     hasKvs: [e.kvs.Esdts([{ id: ctx.stream_nft_token_identifier, nonce, attrs }])],
-  //   });
-  // }
+  if (attrs) {
+    const key = e.Str(`ELRONDesdt${ctx.stream_nft_token_identifier}`).toTopHex() + e.U64(1).toTopHex();
+    const value = (await ctx.world.sysAcc.getAccountKvs())[key];
+    expect(value).toContain(attrs.toTopHex())
+  }
 };
 
 export const requireEsdtBalance = async (ctx: TestContext, wallet: SWallet, amount: number) => {
@@ -137,8 +136,10 @@ export const generateStreamNftAttr = (stream: any) => {
     e.Str(stream.payment_token),
     e.U64(stream.payment_nonce),
     e.U(stream.deposit),
-    e.U(stream.remaining_balance),
+    e.U(stream.deposit - stream.claimed_amount),
     e.Bool(stream.can_cancel),
+    e.U64(stream.start_time),
+    e.U64(stream.end_time),
     e.U64(stream.cliff),
     e.Bool(false)
   );
