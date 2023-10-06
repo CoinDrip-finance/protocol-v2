@@ -347,7 +347,7 @@ checksum = "cd7cc57abe963c6d3b9d8be5b06ba7c8957a930305ca90304f24ef040aa6f961"
 
 [[package]]
 name = "coindrip"
-version = "1.0.1-beta"
+version = "2.0.0-beta"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",

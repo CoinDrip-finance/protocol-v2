@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest';
-import { assertAccount, e } from 'xsuite';
+import { e } from 'xsuite';
 
 import { ERR_STREAM_IS_NOT_CANCELLED } from './errors';
-import { cancelStream, createStream, requireValidStreamNft } from './utils';
+import { cancelStream, createStream, requireStreamInvalid, requireValidStreamNft } from './utils';
 
 test("Stream is not canceled", async (ctx) => {
   const streamId = await createStream(ctx, 600);
@@ -109,9 +109,7 @@ test("Successful claim after cancel and remove stream", async (ctx) => {
     value: 0,
   });
 
-  assertAccount(await ctx.contract.getAccountWithKvs(), {
-    hasKvs: [e.kvs.Mapper("streamById", e.U64(streamId)).Value(null)],
-  });
+  await requireStreamInvalid(ctx, streamId);
 
   await requireValidStreamNft(ctx, 0);
 });

@@ -16,6 +16,7 @@ declare module "vitest" {
 
 const STREAM_NFT_TOKEN_IDENTIFIER = "DRIP-93cadd";
 const PAYMENT_ESDT_TOKEN_IDENTIFIER = "TEST-93cadd";
+export const PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING = "TESTR-93cadd";
 
 beforeEach(async (ctx) => {
   ctx.world = await SWorld.start();
@@ -54,6 +55,10 @@ beforeEach(async (ctx) => {
         {
           id: PAYMENT_ESDT_TOKEN_IDENTIFIER,
           amount: 6_000,
+        },
+        {
+          id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING,
+          amount: 10,
         },
       ]),
     ],

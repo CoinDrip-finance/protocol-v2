@@ -102,7 +102,7 @@ export const requireValidStreamNft = async (ctx: TestContext, amount = 1, nonce 
   if (attrs) {
     const key = e.Str(`ELRONDesdt${ctx.stream_nft_token_identifier}`).toTopHex() + e.U64(1).toTopHex();
     const value = (await ctx.world.sysAcc.getAccountKvs())[key];
-    expect(value).toContain(attrs.toTopHex())
+    expect(value).toContain(attrs.toTopHex());
   }
 };
 
@@ -115,6 +115,12 @@ export const requireEsdtBalance = async (ctx: TestContext, wallet: SWallet, amou
 export const requireEgldBalance = async (ctx: TestContext, wallet: SWallet, amount: number) => {
   const balance = await wallet.getAccountBalance();
   expect(balance).toBe(BigInt(amount));
+};
+
+export const requireStreamInvalid = async (ctx: TestContext, streamId: number) => {
+  assertAccount(await ctx.contract.getAccountWithKvs(), {
+    hasKvs: [e.kvs.Mapper("streamById", e.U64(streamId)).Value(null)],
+  });
 };
 
 const exponentDecoder = d.Tuple({
