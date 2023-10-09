@@ -13,3 +13,5 @@ output*
 erdpy*.json
 mxpy.json
 commands.txt
+
+node_modules
