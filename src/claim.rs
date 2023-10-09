@@ -2,7 +2,7 @@ multiversx_sc::imports!();
 
 use crate::{
     errors::{ERR_CANT_CLAIM, ERR_ZERO_CLAIM},
-    storage::{Segment, Status, StreamRole},
+    storage::{Segment, Status, StreamAttributes, StreamRole},
 };
 
 #[multiversx_sc::module]
@@ -130,6 +130,13 @@ pub trait ClaimModule:
             stream.claimed_amount += &amount;
             self.stream_by_id(stream_id).set(&stream);
 
+            let mut nft_attributes: StreamAttributes<Self::Api> = self
+                .stream_nft_token()
+                .get_token_attributes(stream.nft_nonce);
+            nft_attributes.remaining_balance -= &amount;
+            self.stream_nft_token()
+                .nft_update_attributes(stream.nft_nonce, &nft_attributes);
+
             self.send().direct_esdt(
                 &caller,
                 self.stream_nft_token().get_token_id_ref(),
@@ -146,7 +153,7 @@ pub trait ClaimModule:
             &amount,
         );
 
-        self.claim_from_stream_event(stream_id, &amount, is_finalized);
+        self.claim_from_stream_event(stream_id, &amount, &caller);
 
         // TODO: Check to see what props to return here
     }
@@ -157,5 +164,7 @@ pub trait ClaimModule:
         }
 
         self.stream_by_id(stream_id).clear();
+
+        self.finished_stream_event(stream_id);
     }
 }

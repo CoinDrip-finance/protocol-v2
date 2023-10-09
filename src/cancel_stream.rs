@@ -4,7 +4,7 @@ use crate::{
     errors::{
         ERR_CANCEL_ONLY_SENDER, ERR_CANT_CANCEL, ERR_STREAM_IS_NOT_CANCELLED, ERR_ZERO_CLAIM,
     },
-    storage::{BalancesAfterCancel, StreamRole},
+    storage::{BalancesAfterCancel, StreamAttributes, StreamRole},
 };
 
 #[multiversx_sc::module]
@@ -36,7 +36,7 @@ pub trait CancelStreamModule:
 
         stream.balances_after_cancel = Some(BalancesAfterCancel {
             sender_balance,
-            recipient_balance,
+            recipient_balance: recipient_balance.clone(),
         });
 
         self.stream_by_id(stream_id).set(stream.clone());
@@ -49,6 +49,14 @@ pub trait CancelStreamModule:
         let caller = self.blockchain().get_caller();
 
         if !with_claim && role == StreamRole::Recipient {
+            let mut nft_attributes: StreamAttributes<Self::Api> = self
+                .stream_nft_token()
+                .get_token_attributes(stream.nft_nonce);
+            nft_attributes.remaining_balance = recipient_balance;
+            nft_attributes.is_canceled = true;
+            self.stream_nft_token()
+                .nft_update_attributes(stream.nft_nonce, &nft_attributes);
+
             self.send().direct_esdt(
                 &caller,
                 self.stream_nft_token().get_token_id_ref(),
@@ -63,6 +71,7 @@ pub trait CancelStreamModule:
     /// After a stream was cancelled, you can call this endpoint to claim the streamed tokens as a recipient or the remaining tokens as a sender
     /// This endpoint is especially helpful when the recipient/sender is a non-payable smart contract
     /// For convenience, this endpoint is automatically called by default from the cancel_stream endpoint (is not instructed otherwise by the "_with_claim" param)
+    #[payable("*")]
     #[endpoint(claimFromStreamAfterCancel)]
     fn claim_from_stream_after_cancel(&self, stream_id: u64) {
         let (role, mut stream) = self.require_valid_stream_nft(stream_id, OptionalValue::None);
@@ -95,7 +104,7 @@ pub trait CancelStreamModule:
             self.claim_from_stream_event(
                 stream_id,
                 &balances_after_cancel.recipient_balance,
-                false,
+                &caller,
             );
             balances_after_cancel.recipient_balance = BigUint::zero();
 

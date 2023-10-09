@@ -248,7 +248,7 @@ dependencies = [
 
 [[package]]
 name = "coindrip"
-version = "1.0.1-beta"
+version = "2.0.0-beta"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",

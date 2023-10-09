@@ -24,7 +24,7 @@ pub trait EventsModule {
         &self,
         #[indexed] stream_id: u64,
         #[indexed] amount: &BigUint,
-        #[indexed] finalized: bool,
+        #[indexed] recipient: &ManagedAddress,
     );
 
     #[event("cancelStream")]
@@ -34,6 +34,9 @@ pub trait EventsModule {
         #[indexed] canceled_by: &ManagedAddress,
         #[indexed] claimed_amount: &BigUint,
     );
+
+    #[event("finishedStream")]
+    fn finished_stream_event(&self, #[indexed] stream_id: u64);
 
     #[event("renounceCancelStream")]
     fn renounce_cancel_stream_event(&self, #[indexed] stream_id: u64);

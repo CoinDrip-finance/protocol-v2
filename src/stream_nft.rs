@@ -3,7 +3,7 @@ use crate::{
         ERR_INVALID_NFT_TOKEN, ERR_INVALID_ROLE, ERR_SEND_ONE_STREAM_NFT, ERR_TOKEN_ALREADY_ISSUED,
         ERR_TOKEN_NOT_ISSUED,
     },
-    storage::{Stream, StreamRole},
+    storage::{Stream, StreamAttributes, StreamRole},
 };
 
 multiversx_sc::imports!();
@@ -45,7 +45,6 @@ pub trait StreamNftModule:
         require!(!self.stream_nft_token().is_empty(), ERR_TOKEN_NOT_ISSUED);
 
         let big_one = BigUint::from(1u64);
-        let empty_buffer = ManagedBuffer::new();
 
         let mut token_name = ManagedBuffer::new_from_bytes(b"CoinDrip Stream #");
         let stream_id_buffer = self.u64_to_ascii(stream.nft_nonce);
@@ -61,13 +60,33 @@ pub trait StreamNftModule:
 
         let royalties = BigUint::from(NFT_ROYALTIES);
 
+        let attributes = StreamAttributes {
+            sender: stream.sender.clone(),
+            payment_token: stream.payment_token.clone(),
+            payment_nonce: stream.payment_nonce,
+            deposit: stream.deposit.clone(),
+            remaining_balance: stream.deposit.clone(),
+            can_cancel: stream.can_cancel,
+            start_time: stream.start_time,
+            end_time: stream.end_time,
+            cliff: stream.cliff,
+            is_canceled: false,
+        };
+        let mut serialized_attributes = ManagedBuffer::new();
+        if let core::result::Result::Err(err) = attributes.top_encode(&mut serialized_attributes) {
+            sc_panic!("Attributes encode error: {}", err.message_bytes());
+        }
+
+        let attributes_sha256 = self.crypto().sha256(&serialized_attributes);
+        let attributes_hash = attributes_sha256.as_managed_buffer();
+
         let nonce = self.send().esdt_nft_create(
             self.stream_nft_token().get_token_id_ref(),
             &big_one,
             &token_name,
             &royalties,
-            &empty_buffer,
-            &empty_buffer,
+            &attributes_hash,
+            &attributes,
             &uris,
         );
 

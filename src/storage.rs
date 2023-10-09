@@ -59,6 +59,20 @@ pub struct BrokerFee<M: ManagedTypeApi> {
     pub fee: BigUint<M>,
 }
 
+#[derive(TopEncode, TopDecode, TypeAbi, Clone, PartialEq, Debug)]
+pub struct StreamAttributes<M: ManagedTypeApi> {
+    pub sender: ManagedAddress<M>,
+    pub payment_token: EgldOrEsdtTokenIdentifier<M>,
+    pub payment_nonce: u64,
+    pub deposit: BigUint<M>,
+    pub remaining_balance: BigUint<M>,
+    pub can_cancel: bool,
+    pub start_time: u64,
+    pub end_time: u64,
+    pub cliff: u64,
+    pub is_canceled: bool,
+}
+
 #[multiversx_sc::module]
 pub trait StorageModule {
     #[view(getStreamData)]
