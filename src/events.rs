@@ -20,7 +20,12 @@ pub trait EventsModule {
     );
 
     #[event("claimFromStream")]
-    fn claim_from_stream_event(&self, #[indexed] stream_id: u64, #[indexed] amount: &BigUint);
+    fn claim_from_stream_event(
+        &self,
+        #[indexed] stream_id: u64,
+        #[indexed] amount: &BigUint,
+        #[indexed] recipient: &ManagedAddress,
+    );
 
     #[event("cancelStream")]
     fn cancel_stream_event(

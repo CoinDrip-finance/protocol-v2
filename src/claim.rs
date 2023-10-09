@@ -153,7 +153,7 @@ pub trait ClaimModule:
             &amount,
         );
 
-        self.claim_from_stream_event(stream_id, &amount);
+        self.claim_from_stream_event(stream_id, &amount, &caller);
 
         // TODO: Check to see what props to return here
     }

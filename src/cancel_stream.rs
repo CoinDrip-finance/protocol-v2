@@ -101,7 +101,11 @@ pub trait CancelStreamModule:
                 stream.payment_nonce,
                 &balances_after_cancel.recipient_balance,
             );
-            self.claim_from_stream_event(stream_id, &balances_after_cancel.recipient_balance);
+            self.claim_from_stream_event(
+                stream_id,
+                &balances_after_cancel.recipient_balance,
+                &caller,
+            );
             balances_after_cancel.recipient_balance = BigUint::zero();
 
             self.burn_stream_nft(stream_id);
