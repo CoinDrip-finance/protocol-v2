@@ -101,6 +101,7 @@ pub trait CancelStreamModule:
                 stream.payment_nonce,
                 &balances_after_cancel.recipient_balance,
             );
+            stream.claimed_amount += &balances_after_cancel.recipient_balance;
             self.claim_from_stream_event(
                 stream_id,
                 &balances_after_cancel.recipient_balance,

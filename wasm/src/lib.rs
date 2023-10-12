@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           14
+// Endpoints:                           15
 // Async Callback:                       1
-// Total number of exported functions:  16
+// Total number of exported functions:  17
 
 #![no_std]
 
@@ -26,6 +26,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getProtocolFee => protocol_fee
         createStreamDuration => create_stream_duration
         createStream => create_stream
+        streamedAmount => streamed_amount
         recipientBalance => recipient_balance
         senderBalance => sender_balance
         claimFromStream => claim_from_stream

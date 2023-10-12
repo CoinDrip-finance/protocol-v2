@@ -14,6 +14,7 @@ pub trait ClaimModule:
     + crate::svg::SvgModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
+    /// Compute the streamed amount from a specific stream segment
     fn compute_segment_value(
         &self,
         segment_start_time: u64,
@@ -38,6 +39,43 @@ pub trait ClaimModule:
             .pow(segment.exponent.numerator / segment.exponent.denominator);
 
         numerator.div(denominator)
+    }
+
+    ///
+    /// Calculates the entire streamed amount until the current time
+    /// |************|--|
+    /// S            C  E
+    /// S = start time
+    /// C = current time
+    /// E = end time
+    /// The zone marked with "****..." represents the streamed amount
+    #[view(streamedAmount)]
+    fn streamed_amount(&self, stream_id: u64) -> BigUint {
+        let stream = self.get_stream(stream_id);
+        let current_time = self.blockchain().get_block_timestamp();
+
+        if current_time < stream.start_time {
+            return BigUint::zero();
+        }
+
+        if current_time > stream.end_time {
+            return stream.deposit;
+        }
+
+        let mut last_segment_end_time = stream.start_time;
+        let mut recipient_balance = BigUint::zero();
+        for segment in &stream.segments {
+            let segment_amount = self.compute_segment_value(last_segment_end_time, segment.clone());
+
+            if segment_amount == 0 {
+                break;
+            }
+
+            recipient_balance = recipient_balance.add(segment_amount);
+            last_segment_end_time += segment.duration;
+        }
+
+        recipient_balance.min(stream.deposit)
     }
 
     ///
@@ -66,20 +104,8 @@ pub trait ClaimModule:
             return stream.deposit.sub(stream.claimed_amount);
         }
 
-        let mut last_segment_end_time = stream.start_time;
-        let mut recipient_balance = BigUint::zero();
-        for segment in &stream.segments {
-            let segment_amount = self.compute_segment_value(last_segment_end_time, segment.clone());
-
-            if segment_amount == 0 {
-                break;
-            }
-
-            recipient_balance = recipient_balance.add(segment_amount);
-            last_segment_end_time += segment.duration;
-        }
-
-        recipient_balance.min(stream.deposit) - stream.claimed_amount
+        let streamed_amount = self.streamed_amount(stream_id);
+        streamed_amount - stream.claimed_amount
     }
 
     /// Calculates the sender balance based on the recipient balance and the claimed balance
