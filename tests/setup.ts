@@ -1,5 +1,5 @@
-import { beforeEach } from 'vitest';
-import { e, SContract, SWallet, SWorld } from 'xsuite';
+import { beforeEach } from "vitest";
+import { e, SContract, SWallet, SWorld } from "xsuite";
 
 declare module "vitest" {
   export interface TestContext {
@@ -58,7 +58,7 @@ beforeEach(async (ctx) => {
         },
         {
           id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING,
-          amount: 10,
+          amount: 1300000000000000000n,
         },
       ]),
     ],

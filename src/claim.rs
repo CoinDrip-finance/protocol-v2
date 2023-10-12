@@ -79,7 +79,7 @@ pub trait ClaimModule:
             last_segment_end_time += segment.duration;
         }
 
-        recipient_balance.min(stream.deposit)
+        recipient_balance.min(stream.deposit) - stream.claimed_amount
     }
 
     /// Calculates the sender balance based on the recipient balance and the claimed balance

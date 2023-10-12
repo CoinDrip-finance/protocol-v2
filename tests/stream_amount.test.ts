@@ -1,9 +1,15 @@
-import { expect, test } from 'vitest';
-import { assertAccount, e } from 'xsuite';
+import { expect, test } from "vitest";
+import { assertAccount, e } from "xsuite";
 
-import { ERR_ZERO_CLAIM } from './errors';
-import { PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING } from './setup';
-import { claimFromStream, createStream, getRecipientBalance, requireStreamInvalid, requireValidStreamNft } from './utils';
+import { ERR_ZERO_CLAIM } from "./errors";
+import { PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING } from "./setup";
+import {
+  claimFromStream,
+  createStream,
+  getRecipientBalance,
+  requireStreamInvalid,
+  requireValidStreamNft,
+} from "./utils";
 
 test("Zero stream", async (ctx) => {
   const streamId = await createStream(ctx, 600);
@@ -40,7 +46,7 @@ test("Recipient balance after finish", async (ctx) => {
 test("Rounding test", async (ctx) => {
   const result = await ctx.sender_wallet.callContract({
     callee: ctx.contract,
-    gasLimit: 150_000_000,
+    gasLimit: 200_000_000,
     funcName: "createStreamDuration",
     funcArgs: [ctx.recipient_wallet, e.U64(600)],
     value: 0,
@@ -83,4 +89,47 @@ test("Rounding test", async (ctx) => {
   await requireValidStreamNft(ctx, 0);
 
   await requireStreamInvalid(ctx, streamId);
+});
+
+test("Rounding test 2", async (ctx) => {
+  const amount = 1200000000000000000n;
+  const result = await ctx.sender_wallet.callContract({
+    callee: ctx.contract,
+    gasLimit: 200_000_000,
+    funcName: "createStreamDuration",
+    funcArgs: [ctx.recipient_wallet, e.U64(86400)],
+    value: 0,
+    esdts: [
+      {
+        id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING,
+        amount,
+      },
+    ],
+  });
+
+  const streamId = parseInt(result.returnData[0]);
+
+  await claimFromStream(ctx, streamId).assertFail({ message: ERR_ZERO_CLAIM });
+
+  await ctx.world.setCurrentBlockInfo({
+    timestamp: 3600,
+  });
+
+  assertAccount(await ctx.recipient_wallet.getAccountWithKvs(), {
+    hasKvs: [e.kvs.Esdts([{ id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING, amount: 0 }])],
+  });
+
+  let recipientBalance = await getRecipientBalance(ctx, streamId);
+  console.log(recipientBalance);
+
+  await claimFromStream(ctx, streamId);
+
+  recipientBalance = await getRecipientBalance(ctx, streamId);
+  console.log(recipientBalance);
+
+  assertAccount(await ctx.recipient_wallet.getAccountWithKvs(), {
+    hasKvs: [e.kvs.Esdts([{ id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING, amount: amount / 10n }])],
+  });
+
+  await requireValidStreamNft(ctx);
 });

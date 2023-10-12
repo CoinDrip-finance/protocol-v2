@@ -1,12 +1,12 @@
-import { expect, TestContext } from 'vitest';
-import { assertAccount, d, e, SWallet } from 'xsuite';
-import { TupleEncodable } from 'xsuite/dist/data/TupleEncodable';
-import { CallContractTxResult, TxResultPromise } from 'xsuite/dist/world/world';
+import { expect, TestContext } from "vitest";
+import { assertAccount, d, e, SWallet } from "xsuite";
+import { TupleEncodable } from "xsuite/dist/data/TupleEncodable";
+import { CallContractTxResult, TxResultPromise } from "xsuite/dist/world/world";
 
 export const createStream = async (ctx: TestContext, duration = 632, cliff = 10, canCancel = true) => {
   const result = await ctx.sender_wallet.callContract({
     callee: ctx.contract,
-    gasLimit: 150_000_000,
+    gasLimit: 200_000_000,
     funcName: "createStreamDuration",
     funcArgs: [ctx.recipient_wallet, e.U64(duration), e.U64(cliff), e.Bool(canCancel)],
     value: 10,

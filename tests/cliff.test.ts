@@ -1,8 +1,8 @@
-import { expect, test } from 'vitest';
-import { e } from 'xsuite';
+import { expect, test } from "vitest";
+import { e } from "xsuite";
 
-import { ERR_CLIFF_TOO_BIG, ERR_ZERO_CLAIM } from './errors';
-import { claimFromStream, createStream, getStream, requireValidStreamNft } from './utils';
+import { ERR_CLIFF_TOO_BIG, ERR_ZERO_CLAIM } from "./errors";
+import { claimFromStream, createStream, getStream, requireValidStreamNft } from "./utils";
 
 test("Valid cliff", async (ctx) => {
   const streamId = await createStream(ctx, 632, 200);
@@ -37,7 +37,7 @@ test("Cliff too big", async (ctx) => {
   await ctx.sender_wallet
     .callContract({
       callee: ctx.contract,
-      gasLimit: 130_000_000,
+      gasLimit: 200_000_000,
       funcName: "createStreamDuration",
       funcArgs: [ctx.recipient_wallet, e.U64(632), e.U64(700)],
       value: 1,
