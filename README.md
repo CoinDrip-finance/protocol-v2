@@ -37,5 +37,5 @@ We've participated in the Payments track during the 1st MultiversX Hackathon to 
 - [Protocol Smart Contract](https://github.com/CoinDrip-finance/protocol-v2)
 - [Protocol dApp](https://github.com/CoinDrip-finance/client-v2)
 - [Blockchain events handler](https://github.com/CoinDrip-finance/events-processor-v2)
-- Presentation Website
+- [Presentation Website](https://github.com/CoinDrip-finance/website-v2)
 - Branding and UI/UX Design
