@@ -16,7 +16,6 @@ pub trait CreateStreamModule:
     crate::storage::StorageModule
     + crate::events::EventsModule
     + crate::stream_nft::StreamNftModule
-    + crate::svg::SvgModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("*")]

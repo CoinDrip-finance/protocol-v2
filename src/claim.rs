@@ -11,7 +11,6 @@ pub trait ClaimModule:
     + crate::events::EventsModule
     + crate::status::StatusModule
     + crate::stream_nft::StreamNftModule
-    + crate::svg::SvgModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     /// Compute the streamed amount from a specific stream segment

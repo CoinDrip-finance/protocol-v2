@@ -94,6 +94,8 @@ pub trait StorageModule {
 
     #[storage_mapper("streamNftToken")]
     fn stream_nft_token(&self) -> NonFungibleTokenMapper<Self::Api>;
+    #[storage_mapper("streamNftBaseUri")]
+    fn stream_nft_base_uri(&self) -> SingleValueMapper<ManagedBuffer>;
 
     // Fees
     #[view(getProtocolFee)]

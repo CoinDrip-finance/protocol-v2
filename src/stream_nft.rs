@@ -18,7 +18,6 @@ pub trait StreamNftModule:
     crate::storage::StorageModule
     + crate::events::EventsModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
-    + crate::svg::SvgModule
 {
     #[only_owner]
     #[payable("EGLD")]
@@ -51,10 +50,13 @@ pub trait StreamNftModule:
         token_name.append(&stream_id_buffer);
 
         let mut uris = ManagedVec::new();
-        let mut full_uri = ManagedBuffer::new_from_bytes(b"data:image/svg+xml;base64,");
+        let mut full_uri = self.stream_nft_base_uri().get();
+        full_uri.append_bytes(b"/api/stream/");
+        full_uri.append(&stream_id_buffer);
+        full_uri.append_bytes(b"/nft");
 
-        let svg_image = self.generate_svg_from_stream(stream);
-        full_uri.append(&svg_image);
+        // let svg_image = self.generate_svg_from_stream(stream);
+        // full_uri.append(&svg_image);
 
         uris.push(full_uri);
 
@@ -132,5 +134,44 @@ pub trait StreamNftModule:
 
         self.stream_nft_token()
             .nft_burn(nft_nonce, &BigUint::from(1u32));
+    }
+
+    // TODO: Give credit for this function to Martin Wagner | CIO | Knights of Cathena
+    fn u64_to_ascii(&self, number: u64) -> ManagedBuffer {
+        let mut reversed_digits = ManagedVec::<Self::Api, u8>::new();
+        let mut result = number.clone();
+
+        while result > 0 {
+            let digit = result % 10;
+            result /= 10;
+
+            let digit_char = match digit {
+                0 => b'0',
+                1 => b'1',
+                2 => b'2',
+                3 => b'3',
+                4 => b'4',
+                5 => b'5',
+                6 => b'6',
+                7 => b'7',
+                8 => b'8',
+                9 => b'9',
+                _ => sc_panic!("invalid digit"),
+            };
+
+            reversed_digits.push(digit_char);
+        }
+
+        if &reversed_digits.len() == &0 {
+            return ManagedBuffer::new_from_bytes(b"0");
+        }
+
+        let mut o = ManagedBuffer::new();
+
+        for digit in reversed_digits.iter().rev() {
+            o.append_bytes(&[digit]);
+        }
+
+        o
     }
 }

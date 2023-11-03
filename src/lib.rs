@@ -11,7 +11,6 @@ mod owner;
 mod status;
 pub mod storage;
 pub mod stream_nft;
-mod svg;
 
 #[multiversx_sc::contract]
 pub trait CoinDrip:
@@ -24,8 +23,9 @@ pub trait CoinDrip:
     + status::StatusModule
     + stream_nft::StreamNftModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
-    + svg::SvgModule
 {
     #[init]
-    fn init(&self) {}
+    fn init(&self, nft_base_uri: ManagedBuffer) {
+        self.stream_nft_base_uri().set_if_empty(nft_base_uri);
+    }
 }

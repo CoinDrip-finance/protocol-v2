@@ -14,7 +14,6 @@ pub trait CancelStreamModule:
     + crate::claim::ClaimModule
     + crate::status::StatusModule
     + crate::stream_nft::StreamNftModule
-    + crate::svg::SvgModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     /// This endpoint can be used the by sender or recipient of a stream to cancel the stream.
