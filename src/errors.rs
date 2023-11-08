@@ -20,5 +20,6 @@ pub const ERR_INVALID_NFT_TOKEN_NONCE: &str = "Invalid token nonce";
 pub const ERR_INVALID_ROLE: &str = "Unauthorized! Invalid Role";
 pub const ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO: &str =
     "Segment exponent denominator must be greater than 0";
+pub const ERR_TOO_MANY_SEGMENTS: &str = "Too many segments";
 pub const ERR_INVALID_SEGMENTS_DURATION: &str = "Invalid segments duration";
 pub const ERR_INVALID_SEGMENTS_DEPOSIT: &str = "Invalid segments deposit";

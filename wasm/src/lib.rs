@@ -24,7 +24,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         getStreamData => get_stream
         getProtocolFee => protocol_fee
-        createStreamDuration => create_stream_duration
+        createStreamNow => create_stream_now
         createStream => create_stream
         streamedAmount => streamed_amount
         recipientBalance => recipient_balance

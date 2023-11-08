@@ -2,14 +2,15 @@ use crate::{
     errors::{
         ERR_BROKER_FEE_TOO_BIG, ERR_CLIFF_TOO_BIG, ERR_END_TIME, ERR_INVALID_SEGMENTS_DEPOSIT,
         ERR_INVALID_SEGMENTS_DURATION, ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO, ERR_START_TIME,
-        ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC, ERR_ZERO_DEPOSIT,
+        ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC, ERR_TOO_MANY_SEGMENTS, ERR_ZERO_DEPOSIT,
     },
-    storage::{BrokerFee, Exponent, Segment, Stream},
+    storage::{BrokerFee, Segment, Stream},
 };
 
 multiversx_sc::imports!();
 
 const MAX_FEE: u64 = 10_00;
+const MAX_SEGMENTS: usize = 25;
 
 #[multiversx_sc::module]
 pub trait CreateStreamModule:
@@ -19,21 +20,21 @@ pub trait CreateStreamModule:
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[payable("*")]
-    #[endpoint(createStreamDuration)]
-    fn create_stream_duration(
+    #[endpoint(createStreamNow)]
+    fn create_stream_now(
         &self,
         recipient: ManagedAddress,
-        duration: u64,
+        segments: ManagedVec<Segment<Self::Api>>,
         cliff_opt: OptionalValue<u64>,
         can_cancel_opt: OptionalValue<bool>,
         broker_opt: OptionalValue<BrokerFee<Self::Api>>,
     ) -> u64 {
         let start_time = self.blockchain().get_block_timestamp();
-        let end_time = start_time + duration;
+
         self.create_stream(
             recipient,
             start_time,
-            end_time,
+            segments,
             cliff_opt,
             can_cancel_opt,
             broker_opt,
@@ -46,7 +47,7 @@ pub trait CreateStreamModule:
         &self,
         recipient: ManagedAddress,
         start_time: u64,
-        end_time: u64,
+        segments: ManagedVec<Segment<Self::Api>>,
         cliff_opt: OptionalValue<u64>,
         can_cancel_opt: OptionalValue<bool>,
         broker_opt: OptionalValue<BrokerFee<Self::Api>>,
@@ -65,7 +66,6 @@ pub trait CreateStreamModule:
 
         let current_time = self.blockchain().get_block_timestamp();
         require!(start_time >= current_time, ERR_START_TIME);
-        require!(end_time > start_time, ERR_END_TIME);
 
         let stream_id = self.get_last_stream_id() + 1;
 
@@ -100,20 +100,9 @@ pub trait CreateStreamModule:
             }
         }
 
-        // Create segment
-        let mut segments = ManagedVec::new();
-        let first_exponent = Exponent {
-            numerator: 1u32,
-            denominator: 1u32,
-        };
-        let first_segment = Segment {
-            amount: stream_amount.clone(),
-            exponent: first_exponent,
-            duration: end_time - start_time,
-        };
-        segments.push(first_segment);
-
-        self.validate_stream_segments(&stream_amount, end_time - start_time, &segments);
+        let stream_duration = self.validate_stream_segments(&stream_amount, &segments);
+        let end_time = start_time + stream_duration;
+        require!(end_time > start_time, ERR_END_TIME);
 
         let cliff = cliff_opt.into_option().unwrap_or_default();
         require!(start_time + cliff < end_time, ERR_CLIFF_TOO_BIG);
@@ -166,12 +155,16 @@ pub trait CreateStreamModule:
     fn validate_stream_segments(
         &self,
         deposit: &BigUint,
-        duration: u64,
         segments: &ManagedVec<Segment<Self::Api>>,
-    ) {
+    ) -> u64 {
+        require!(segments.len() <= MAX_SEGMENTS, ERR_TOO_MANY_SEGMENTS);
+
         let mut segments_duration = 0u64;
         let mut segments_total_deposit = BigUint::zero();
         for segment in segments {
+            require!(segment.duration > 0, ERR_INVALID_SEGMENTS_DURATION);
+            require!(segment.amount > 0, ERR_INVALID_SEGMENTS_DEPOSIT);
+
             segments_duration += segment.duration;
             segments_total_deposit += segment.amount;
 
@@ -181,10 +174,11 @@ pub trait CreateStreamModule:
             );
         }
 
-        require!(segments_duration == duration, ERR_INVALID_SEGMENTS_DURATION);
         require!(
             &segments_total_deposit == deposit,
             ERR_INVALID_SEGMENTS_DEPOSIT
         );
+
+        segments_duration
     }
 }
