@@ -25,15 +25,9 @@ pub struct BalancesAfterCancel<M: ManagedTypeApi> {
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
-pub struct Exponent {
-    pub numerator: u32,
-    pub denominator: u32,
-}
-
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Segment<M: ManagedTypeApi> {
     pub amount: BigUint<M>,
-    pub exponent: Exponent,
+    pub exponent: u32,
     pub duration: u64,
 }
 

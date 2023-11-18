@@ -1,3 +1,5 @@
+use crate::storage::Segment;
+
 multiversx_sc::imports!();
 
 #[multiversx_sc::module]
@@ -17,6 +19,7 @@ pub trait EventsModule {
         #[indexed] end_time: u64,
         #[indexed] can_cancel: bool,
         #[indexed] cliff: u64,
+        #[indexed] segments: &ManagedVec<Segment<Self::Api>>,
     );
 
     #[event("claimFromStream")]

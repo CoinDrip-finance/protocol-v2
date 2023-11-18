@@ -30,12 +30,10 @@ pub trait ClaimModule:
             return segment.amount;
         }
 
-        // TODO: Implement nth_root in BigUint to allow fractional exponent
         let numerator = BigUint::from(current_time - segment_start_time)
-            .pow(segment.exponent.numerator / segment.exponent.denominator)
+            .pow(segment.exponent)
             .mul(segment.amount);
-        let denominator = BigUint::from(segment.duration)
-            .pow(segment.exponent.numerator / segment.exponent.denominator);
+        let denominator = BigUint::from(segment.duration).pow(segment.exponent);
 
         numerator.div(denominator)
     }
@@ -66,11 +64,11 @@ pub trait ClaimModule:
         for segment in &stream.segments {
             let segment_amount = self.compute_segment_value(last_segment_end_time, segment.clone());
 
-            if segment_amount == 0 {
+            if segment_amount == 0 && segment.amount > 0 {
                 break;
             }
 
-            recipient_balance = recipient_balance.add(segment_amount);
+            recipient_balance += &segment_amount;
             last_segment_end_time += segment.duration;
         }
 

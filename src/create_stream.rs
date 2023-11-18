@@ -118,7 +118,7 @@ pub trait CreateStreamModule:
             start_time,
             end_time,
             cliff,
-            segments,
+            segments: segments.clone(),
             balances_after_cancel: None,
         };
 
@@ -146,6 +146,7 @@ pub trait CreateStreamModule:
             end_time,
             can_cancel,
             cliff,
+            &segments,
         );
 
         // TODO: Check to see what props to return here
@@ -163,15 +164,9 @@ pub trait CreateStreamModule:
         let mut segments_total_deposit = BigUint::zero();
         for segment in segments {
             require!(segment.duration > 0, ERR_INVALID_SEGMENTS_DURATION);
-            require!(segment.amount > 0, ERR_INVALID_SEGMENTS_DEPOSIT);
 
             segments_duration += segment.duration;
             segments_total_deposit += segment.amount;
-
-            require!(
-                segment.exponent.denominator > 0,
-                ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO
-            );
         }
 
         require!(
