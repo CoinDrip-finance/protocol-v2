@@ -4,6 +4,7 @@ pub const ERR_ZERO_DEPOSIT: &str = "deposit is zero";
 pub const ERR_START_TIME: &str = "start time before current time";
 pub const ERR_END_TIME: &str = "end time before the start time";
 pub const ERR_ZERO_CLAIM: &str = "amount is zero";
+pub const ERR_ZERO_INVALID_CLAIM_AMOUNT: &str = "invalid claim amount";
 pub const ERR_CANT_CANCEL: &str = "this stream can't be canceled";
 pub const ERR_CANCEL_ONLY_SENDER: &str = "Only sender can renounce the cancel stream right";
 pub const ERR_INVALID_STREAM: &str = "Stream does not exist";

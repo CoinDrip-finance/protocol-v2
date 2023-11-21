@@ -25,7 +25,17 @@ pub trait CoinDrip:
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
     #[init]
-    fn init(&self, nft_base_uri: ManagedBuffer) {
+    fn init(
+        &self,
+        nft_base_uri: ManagedBuffer,
+        wrap_egld_sc: ManagedAddress,
+        wrap_egld_token: TokenIdentifier,
+        ash_aggregator_sc: ManagedAddress,
+    ) {
         self.stream_nft_base_uri().set_if_empty(nft_base_uri);
+
+        self.wrap_egld_sc().set_if_empty(wrap_egld_sc);
+        self.wrap_egld_token().set_if_empty(wrap_egld_token);
+        self.ash_aggregator_sc().set_if_empty(ash_aggregator_sc);
     }
 }

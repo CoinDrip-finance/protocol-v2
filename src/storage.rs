@@ -67,6 +67,31 @@ pub struct StreamAttributes<M: ManagedTypeApi> {
     pub is_canceled: bool,
 }
 
+/**
+ * Ash Aggregator Structs
+ */
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, TypeAbi, Clone, ManagedVecItem,
+)]
+pub struct TokenAmount<M: ManagedTypeApi> {
+    pub token: TokenIdentifier<M>,
+    pub amount: BigUint<M>,
+}
+#[derive(
+    TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, TypeAbi, Clone, ManagedVecItem,
+)]
+pub struct AggregatorStep<M: ManagedTypeApi> {
+    pub token_in: TokenIdentifier<M>,
+    pub token_out: TokenIdentifier<M>,
+    pub amount_in: BigUint<M>,
+    pub pool_address: ManagedAddress<M>,
+    pub function_name: ManagedBuffer<M>,
+    pub arguments: ManagedVec<M, ManagedBuffer<M>>,
+}
+/**
+ * END Ash Aggregator Structs
+ */
+
 #[multiversx_sc::module]
 pub trait StorageModule {
     #[view(getStreamData)]
@@ -95,4 +120,15 @@ pub trait StorageModule {
     #[view(getProtocolFee)]
     #[storage_mapper("protocolFee")]
     fn protocol_fee(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    // Ash Aggregator
+    #[view(getAshAggregatorSc)]
+    #[storage_mapper("ashAggregatorSc")]
+    fn ash_aggregator_sc(&self) -> SingleValueMapper<ManagedAddress>;
+    #[view(getWrapEgldSc)]
+    #[storage_mapper("wrapEgldSc")]
+    fn wrap_egld_sc(&self) -> SingleValueMapper<ManagedAddress>;
+    #[view(getWrapEgldToken)]
+    #[storage_mapper("wrapEgldToken")]
+    fn wrap_egld_token(&self) -> SingleValueMapper<TokenIdentifier>;
 }

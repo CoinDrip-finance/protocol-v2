@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           15
+// Endpoints:                           19
 // Async Callback:                       1
-// Total number of exported functions:  17
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -24,12 +24,16 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         getStreamData => get_stream
         getProtocolFee => protocol_fee
+        getAshAggregatorSc => ash_aggregator_sc
+        getWrapEgldSc => wrap_egld_sc
+        getWrapEgldToken => wrap_egld_token
         createStreamNow => create_stream_now
         createStream => create_stream
         streamedAmount => streamed_amount
         recipientBalance => recipient_balance
         senderBalance => sender_balance
         claimFromStream => claim_from_stream
+        claimFromStreamSwap => claim_from_stream_swap
         cancelStream => cancel_stream
         claimFromStreamAfterCancel => claim_from_stream_after_cancel
         renounceCancelStream => renounce_cancel_stream

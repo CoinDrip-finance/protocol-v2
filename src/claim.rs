@@ -1,9 +1,37 @@
 multiversx_sc::imports!();
 
 use crate::{
-    errors::{ERR_CANT_CLAIM, ERR_ZERO_CLAIM},
-    storage::{Segment, Status, StreamAttributes, StreamRole},
+    errors::{ERR_CANT_CLAIM, ERR_ZERO_CLAIM, ERR_ZERO_INVALID_CLAIM_AMOUNT},
+    storage::{AggregatorStep, Segment, Status, StreamAttributes, StreamRole, TokenAmount},
 };
+
+mod ash_aggregator {
+    use crate::storage::{AggregatorStep, TokenAmount};
+
+    multiversx_sc::imports!();
+
+    #[multiversx_sc::proxy]
+    pub trait AggregatorContract {
+        #[payable("*")]
+        #[endpoint]
+        fn aggregate(
+            &self,
+            steps: ManagedVec<AggregatorStep<Self::Api>>,
+            limits: MultiValueEncoded<TokenAmount<Self::Api>>,
+        ) -> ManagedVec<EsdtTokenPayment>;
+    }
+}
+
+mod wrap_egld {
+    multiversx_sc::imports!();
+
+    #[multiversx_sc::proxy]
+    pub trait WrapEgldContract {
+        #[payable("EGLD")]
+        #[endpoint(wrapEgld)]
+        fn wrap_egld(&self) -> EsdtTokenPayment;
+    }
+}
 
 #[multiversx_sc::module]
 pub trait ClaimModule:
@@ -13,6 +41,12 @@ pub trait ClaimModule:
     + crate::stream_nft::StreamNftModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
+    #[proxy]
+    fn ash_aggregator_proxy(&self, sc_address: ManagedAddress) -> ash_aggregator::Proxy<Self::Api>;
+
+    #[proxy]
+    fn wrap_egld_proxy(&self, sc_address: ManagedAddress) -> wrap_egld::Proxy<Self::Api>;
+
     /// Compute the streamed amount from a specific stream segment
     fn compute_segment_value(
         &self,
@@ -52,6 +86,10 @@ pub trait ClaimModule:
         let current_time = self.blockchain().get_block_timestamp();
 
         if current_time < stream.start_time {
+            return BigUint::zero();
+        }
+
+        if stream.start_time + stream.cliff > current_time {
             return BigUint::zero();
         }
 
@@ -127,10 +165,11 @@ pub trait ClaimModule:
         return is_finalized;
     }
 
-    /// This endpoint can be used by the recipient of the stream to claim the stream amount of tokens
-    #[payable("*")]
-    #[endpoint(claimFromStream)]
-    fn claim_from_stream(&self, stream_id: u64) {
+    fn claim_from_stream_internal(
+        &self,
+        stream_id: u64,
+        amount_to_claim_opt: Option<BigUint>,
+    ) -> EgldOrEsdtTokenPayment {
         // Validate the NFT and retrieve the associated stream
         let (_, mut stream) =
             self.require_valid_stream_nft(stream_id, OptionalValue::Some(StreamRole::Recipient));
@@ -143,6 +182,8 @@ pub trait ClaimModule:
         // Get and validate the claimable amount
         let amount = self.recipient_balance(stream_id);
         require!(amount > 0, ERR_ZERO_CLAIM);
+        let amount_to_claim = amount_to_claim_opt.unwrap_or(amount.clone());
+        require!(amount_to_claim <= amount, ERR_ZERO_INVALID_CLAIM_AMOUNT);
 
         let is_finalized = self.is_stream_finalized(stream_id);
         let caller = self.blockchain().get_caller();
@@ -150,13 +191,13 @@ pub trait ClaimModule:
         if is_finalized {
             self.remove_stream(stream_id, true);
         } else {
-            stream.claimed_amount += &amount;
+            stream.claimed_amount += &amount_to_claim;
             self.stream_by_id(stream_id).set(&stream);
 
             let mut nft_attributes: StreamAttributes<Self::Api> = self
                 .stream_nft_token()
                 .get_token_attributes(stream.nft_nonce);
-            nft_attributes.remaining_balance -= &amount;
+            nft_attributes.remaining_balance -= &amount_to_claim;
             self.stream_nft_token()
                 .nft_update_attributes(stream.nft_nonce, &nft_attributes);
 
@@ -168,17 +209,69 @@ pub trait ClaimModule:
             );
         }
 
+        self.claim_from_stream_event(stream_id, &amount, &caller);
+
+        EgldOrEsdtTokenPayment::new(stream.payment_token, stream.payment_nonce, amount_to_claim)
+    }
+
+    /// This endpoint can be used by the recipient of the stream to claim the stream amount of tokens
+    #[payable("*")]
+    #[endpoint(claimFromStream)]
+    fn claim_from_stream(&self, stream_id: u64) {
+        let payment = self.claim_from_stream_internal(stream_id, None);
+
+        let caller = self.blockchain().get_caller();
         // Send claimed tokens
         self.send().direct(
             &caller,
-            &stream.payment_token,
-            stream.payment_nonce,
-            &amount,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
         );
+    }
 
-        self.claim_from_stream_event(stream_id, &amount, &caller);
+    #[payable("*")]
+    #[endpoint(claimFromStreamSwap)]
+    fn claim_from_stream_swap(
+        &self,
+        stream_id: u64,
+        amount: BigUint,
+        steps: ManagedVec<AggregatorStep<Self::Api>>,
+        limits: ManagedVec<TokenAmount<Self::Api>>,
+    ) {
+        // TODO: Get amount from steps maybe
+        // TODO: Add validation for steps and limits
+        let payment = self.claim_from_stream_internal(stream_id, Some(amount));
+        let caller = self.blockchain().get_caller();
 
-        // TODO: Check to see what props to return here
+        // if payment token is egld we need to wrap it
+        if payment.token_identifier.is_egld() {
+            let _: IgnoreValue = self
+                .wrap_egld_proxy(self.wrap_egld_sc().get())
+                .wrap_egld()
+                .with_egld_transfer(payment.amount.clone())
+                .execute_on_dest_context();
+
+            let result_payments = self
+                .ash_aggregator_proxy(self.ash_aggregator_sc().get())
+                .aggregate(steps, MultiValueEncoded::from(limits))
+                .with_esdt_transfer(EsdtTokenPayment::new(
+                    self.wrap_egld_token().get(),
+                    0,
+                    payment.amount,
+                ))
+                .execute_on_dest_context::<ManagedVec<EsdtTokenPayment>>();
+
+            self.send().direct_multi(&caller, &result_payments);
+        } else {
+            let result_payments = self
+                .ash_aggregator_proxy(self.ash_aggregator_sc().get())
+                .aggregate(steps, MultiValueEncoded::from(limits))
+                .with_egld_or_single_esdt_transfer(payment)
+                .execute_on_dest_context::<ManagedVec<EsdtTokenPayment>>();
+
+            self.send().direct_multi(&caller, &result_payments);
+        }
     }
 
     fn remove_stream(&self, stream_id: u64, with_burn: bool) {
