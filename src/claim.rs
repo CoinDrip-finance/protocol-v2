@@ -1,7 +1,10 @@
 multiversx_sc::imports!();
 
 use crate::{
-    errors::{ERR_CANT_CLAIM, ERR_ZERO_CLAIM, ERR_ZERO_INVALID_CLAIM_AMOUNT},
+    errors::{
+        ERR_ASH_INVALID_LIMITS_STEPS_LENGTH, ERR_ASH_INVALID_STEPS_LENGTH, ERR_CANT_CLAIM,
+        ERR_ZERO_CLAIM, ERR_ZERO_INVALID_CLAIM_AMOUNT,
+    },
     storage::{AggregatorStep, Segment, Status, StreamAttributes, StreamRole, TokenAmount},
 };
 
@@ -113,7 +116,6 @@ pub trait ClaimModule:
         recipient_balance.min(stream.deposit)
     }
 
-    ///
     /// Calculates the recipient balance based on the amount stream so far and the already claimed amount
     /// |xxxx|*******|--|
     /// S            C  E
@@ -235,16 +237,21 @@ pub trait ClaimModule:
     fn claim_from_stream_swap(
         &self,
         stream_id: u64,
-        amount: BigUint,
         steps: ManagedVec<AggregatorStep<Self::Api>>,
         limits: ManagedVec<TokenAmount<Self::Api>>,
     ) {
-        // TODO: Get amount from steps maybe
-        // TODO: Add validation for steps and limits
+        require!(steps.len() > 0, ERR_ASH_INVALID_STEPS_LENGTH);
+        require!(limits.len() > 0, ERR_ASH_INVALID_STEPS_LENGTH);
+        require!(
+            steps.len() + 1 == limits.len(),
+            ERR_ASH_INVALID_LIMITS_STEPS_LENGTH
+        );
+
+        let amount = steps.get(0).amount_in.clone();
         let payment = self.claim_from_stream_internal(stream_id, Some(amount));
         let caller = self.blockchain().get_caller();
 
-        // if payment token is egld we need to wrap it
+        // If payment token is EGLD we wrap it before doing the swap
         if payment.token_identifier.is_egld() {
             let _: IgnoreValue = self
                 .wrap_egld_proxy(self.wrap_egld_sc().get())

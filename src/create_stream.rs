@@ -1,8 +1,8 @@
 use crate::{
     errors::{
         ERR_BROKER_FEE_TOO_BIG, ERR_CLIFF_TOO_BIG, ERR_END_TIME, ERR_INVALID_SEGMENTS_DEPOSIT,
-        ERR_INVALID_SEGMENTS_DURATION, ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO, ERR_START_TIME,
-        ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC, ERR_TOO_MANY_SEGMENTS, ERR_ZERO_DEPOSIT,
+        ERR_INVALID_SEGMENTS_DURATION, ERR_START_TIME, ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC,
+        ERR_TOO_MANY_SEGMENTS, ERR_ZERO_DEPOSIT,
     },
     storage::{BrokerFee, Segment, Stream},
 };
@@ -149,7 +149,6 @@ pub trait CreateStreamModule:
             &segments,
         );
 
-        // TODO: Check to see what props to return here
         stream_id
     }
 

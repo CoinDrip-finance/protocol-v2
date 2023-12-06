@@ -55,9 +55,6 @@ pub trait StreamNftModule:
         full_uri.append(&stream_id_buffer);
         full_uri.append_bytes(b"/nft");
 
-        // let svg_image = self.generate_svg_from_stream(stream);
-        // full_uri.append(&svg_image);
-
         uris.push(full_uri);
 
         let royalties = BigUint::from(NFT_ROYALTIES);
@@ -95,7 +92,9 @@ pub trait StreamNftModule:
         nonce
     }
 
-    // This endpoint checks if a valid stream NFTs is send or if caller is the stream sender
+    /**
+     * This endpoint checks if a valid stream NFTs is send or if caller is the stream sender
+     */
     fn require_valid_stream_nft(
         &self,
         stream_id: u64,

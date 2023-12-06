@@ -35,11 +35,4 @@ pub trait StatusModule: crate::storage::StorageModule {
         let stream_status = self.status_of(stream_id);
         stream_status == Status::Pending || stream_status == Status::InProgress
     }
-
-    fn is_cold(&self, stream_id: u64) -> bool {
-        let stream_status = self.status_of(stream_id);
-        stream_status == Status::Canceled
-            || stream_status == Status::Settled
-            || stream_status == Status::Finished
-    }
 }

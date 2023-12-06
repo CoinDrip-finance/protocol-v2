@@ -24,3 +24,7 @@ pub const ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO: &str =
 pub const ERR_TOO_MANY_SEGMENTS: &str = "Too many segments";
 pub const ERR_INVALID_SEGMENTS_DURATION: &str = "Invalid segments duration";
 pub const ERR_INVALID_SEGMENTS_DEPOSIT: &str = "Invalid segments deposit";
+/// AshSwap Aggregator errors
+pub const ERR_ASH_INVALID_STEPS_LENGTH: &str = "Ash: Invalid steps length";
+pub const ERR_ASH_INVALID_LIMITS_LENGTH: &str = "Ash: Invalid limits length";
+pub const ERR_ASH_INVALID_LIMITS_STEPS_LENGTH: &str = "Ash: Invalid steps or limits length";
