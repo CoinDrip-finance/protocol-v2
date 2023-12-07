@@ -6,6 +6,7 @@ import { PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING } from "./setup";
 import {
   claimFromStream,
   createStream,
+  generateStreamSegment,
   getRecipientBalance,
   requireStreamInvalid,
   requireValidStreamNft,
@@ -47,8 +48,8 @@ test("Rounding test", async (ctx) => {
   const result = await ctx.sender_wallet.callContract({
     callee: ctx.contract,
     gasLimit: 200_000_000,
-    funcName: "createStreamDuration",
-    funcArgs: [ctx.recipient_wallet, e.U64(600)],
+    funcName: "createStreamNow",
+    funcArgs: [ctx.recipient_wallet, generateStreamSegment(2, 1, 600)],
     value: 0,
     esdts: [
       {
@@ -96,8 +97,8 @@ test("Rounding test 2", async (ctx) => {
   const result = await ctx.sender_wallet.callContract({
     callee: ctx.contract,
     gasLimit: 200_000_000,
-    funcName: "createStreamDuration",
-    funcArgs: [ctx.recipient_wallet, e.U64(86400)],
+    funcName: "createStreamNow",
+    funcArgs: [ctx.recipient_wallet, generateStreamSegment(amount, 1, 86400)],
     value: 0,
     esdts: [
       {

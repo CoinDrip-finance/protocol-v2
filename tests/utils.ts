@@ -7,8 +7,8 @@ export const createStream = async (ctx: TestContext, duration = 632, cliff = 10,
   const result = await ctx.sender_wallet.callContract({
     callee: ctx.contract,
     gasLimit: 200_000_000,
-    funcName: "createStreamDuration",
-    funcArgs: [ctx.recipient_wallet, e.U64(duration), e.U64(cliff), e.Bool(canCancel)],
+    funcName: "createStreamNow",
+    funcArgs: [ctx.recipient_wallet, generateStreamSegment(10, 1, duration), e.U64(cliff), e.Bool(canCancel)],
     value: 10,
   });
 
@@ -123,14 +123,9 @@ export const requireStreamInvalid = async (ctx: TestContext, streamId: number) =
   });
 };
 
-const exponentDecoder = d.Tuple({
-  numerator: d.U32(),
-  denominator: d.U32(),
-});
-
 const segmentDecoder = d.Tuple({
   amount: d.U(),
-  exponent: exponentDecoder,
+  exponent: d.U32(),
   duration: d.U64(),
 });
 
@@ -167,4 +162,8 @@ export const generateStreamNftAttr = (stream: any) => {
     e.U64(stream.cliff),
     e.Bool(false)
   );
+};
+
+export const generateStreamSegment = (amount: number | bigint, exponent: number, duration: number) => {
+  return e.Tuple(e.U(amount), e.U32(exponent), e.U64(duration));
 };

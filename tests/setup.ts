@@ -25,6 +25,12 @@ beforeEach(async (ctx) => {
     code: "file:output/coindrip.wasm",
     codeMetadata: [],
     gasLimit: 100_000_000,
+    codeArgs: [
+      e.Str("https://coindrip.finance"),
+      e.Addr("erd1qqqqqqqqqqqqqpgqcc69ts8409p3h77q5chsaqz57y6hugvc4fvs64k74v"),
+      e.Str("WEGLD-bd4d79"),
+      e.Addr("erd1qqqqqqqqqqqqqpgqcc69ts8409p3h77q5chsaqz57y6hugvc4fvs64k74v"),
+    ],
   });
 
   ctx.contract = contract;
