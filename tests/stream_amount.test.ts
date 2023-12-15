@@ -113,7 +113,7 @@ test("Rounding test 2", async (ctx) => {
   await claimFromStream(ctx, streamId).assertFail({ message: ERR_ZERO_CLAIM });
 
   await ctx.world.setCurrentBlockInfo({
-    timestamp: 3600,
+    timestamp: 8640,
   });
 
   assertAccount(await ctx.recipient_wallet.getAccountWithKvs(), {
@@ -121,12 +121,10 @@ test("Rounding test 2", async (ctx) => {
   });
 
   let recipientBalance = await getRecipientBalance(ctx, streamId);
-  console.log(recipientBalance);
 
   await claimFromStream(ctx, streamId);
 
   recipientBalance = await getRecipientBalance(ctx, streamId);
-  console.log(recipientBalance);
 
   assertAccount(await ctx.recipient_wallet.getAccountWithKvs(), {
     hasKvs: [e.kvs.Esdts([{ id: PAYMENT_ESDT_TOKEN_IDENTIFIER_ROUNDING, amount: amount / 10n }])],

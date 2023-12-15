@@ -21,3 +21,4 @@ export const ERR_INVALID_ROLE = "Unauthorized! Invalid Role";
 export const ERR_SEGMENT_EXPONENT_DENOMINATOR_ZERO = "Segment exponent denominator must be greater than 0";
 export const ERR_INVALID_SEGMENTS_DURATION = "Invalid segments duration";
 export const ERR_INVALID_SEGMENTS_DEPOSIT = "Invalid segments deposit";
+export const ERR_TOO_MANY_SEGMENTS = "Too many segments";

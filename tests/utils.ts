@@ -167,3 +167,13 @@ export const generateStreamNftAttr = (stream: any) => {
 export const generateStreamSegment = (amount: number | bigint, exponent: number, duration: number) => {
   return e.Tuple(e.U(amount), e.U32(exponent), e.U64(duration));
 };
+
+export const generateSegmentsWithValue = (count: number, amount: bigint) => {
+  const segments: TupleEncodable[] = [];
+  const amountPerSegment = amount / BigInt(count);
+  for (let i = 0; i < count; i++) {
+    segments.push(generateStreamSegment(amountPerSegment, 1, 10));
+  }
+
+  return e.List(...segments);
+};

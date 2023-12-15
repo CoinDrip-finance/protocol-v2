@@ -1,8 +1,22 @@
 import { expect, test } from "vitest";
 import { d, e } from "xsuite";
 
-import { ERR_START_TIME, ERR_STREAM_TO_CALLER, ERR_STREAM_TO_SC, ERR_ZERO_DEPOSIT } from "./errors";
-import { generateStreamNftAttr, generateStreamSegment, getStream, requireValidStreamNft } from "./utils";
+import {
+  ERR_INVALID_SEGMENTS_DEPOSIT,
+  ERR_INVALID_SEGMENTS_DURATION,
+  ERR_START_TIME,
+  ERR_STREAM_TO_CALLER,
+  ERR_STREAM_TO_SC,
+  ERR_TOO_MANY_SEGMENTS,
+  ERR_ZERO_DEPOSIT,
+} from "./errors";
+import {
+  generateSegmentsWithValue,
+  generateStreamNftAttr,
+  generateStreamSegment,
+  getStream,
+  requireValidStreamNft,
+} from "./utils";
 
 test("Create valid stream with ESDT", async (ctx) => {
   const { returnData } = await ctx.sender_wallet.callContract({
@@ -183,4 +197,38 @@ test("Start time before current time", async (ctx) => {
     .assertFail({ message: ERR_START_TIME });
 });
 
-// TODO: Add tests with invalid segments
+test("Create stream with too many segments", async (ctx) => {
+  await ctx.sender_wallet
+    .callContract({
+      callee: ctx.contract,
+      gasLimit: 200_000_000,
+      funcName: "createStreamNow",
+      funcArgs: [ctx.recipient_wallet, generateSegmentsWithValue(300, 100000n)],
+      value: 1,
+    })
+    .assertFail({ message: ERR_TOO_MANY_SEGMENTS });
+});
+
+test("Create stream invalid segment duration", async (ctx) => {
+  await ctx.sender_wallet
+    .callContract({
+      callee: ctx.contract,
+      gasLimit: 200_000_000,
+      funcName: "createStreamNow",
+      funcArgs: [ctx.recipient_wallet, generateStreamSegment(1, 1, 0)],
+      value: 1,
+    })
+    .assertFail({ message: ERR_INVALID_SEGMENTS_DURATION });
+});
+
+test("Create stream invalid segment deposit", async (ctx) => {
+  await ctx.sender_wallet
+    .callContract({
+      callee: ctx.contract,
+      gasLimit: 200_000_000,
+      funcName: "createStreamNow",
+      funcArgs: [ctx.recipient_wallet, e.List(generateStreamSegment(1, 1, 100), generateStreamSegment(1, 1, 100))],
+      value: 3,
+    })
+    .assertFail({ message: ERR_INVALID_SEGMENTS_DEPOSIT });
+});
