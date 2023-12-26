@@ -32,7 +32,7 @@ If you're a smart contract developer/project building on MultiversX or just a Co
 
 # MultiversX Hackathon 2023
 
-We've participated in the Payments track during the 1st MultiversX Hackathon to build CoinDrip V2. Everything that we list below was built from scratch during the hackathon:
+We've participated and got the 1st place 🏆 in the Payments track during the 1st MultiversX Hackathon to build CoinDrip V2. Everything that we list below was built from scratch during the hackathon:
 
 - [Protocol Smart Contract](https://github.com/CoinDrip-finance/protocol-v2)
 - [Protocol dApp](https://github.com/CoinDrip-finance/client-v2)
