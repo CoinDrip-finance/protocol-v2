@@ -8,10 +8,10 @@ use crate::{
 
 multiversx_sc::imports!();
 
-const TOKEN_NAME: &[u8] = b"CoinDripStreams";
+const TOKEN_NAME: &[u8] = b"CoindripStreams";
 const TOKEN_TICKER: &[u8] = b"DRIP";
 
-const NFT_ROYALTIES: u64 = 2_00;
+const NFT_ROYALTIES: u64 = 3_00;
 
 #[multiversx_sc::module]
 pub trait StreamNftModule:

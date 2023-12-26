@@ -232,6 +232,7 @@ pub trait ClaimModule:
         );
     }
 
+    /// This endpoint is using the AshSwap Aggregator to automatically swap the claimed tokens
     #[payable("*")]
     #[endpoint(claimFromStreamSwap)]
     fn claim_from_stream_swap(
