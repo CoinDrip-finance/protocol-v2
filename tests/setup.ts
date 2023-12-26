@@ -55,7 +55,7 @@ beforeEach(async (ctx) => {
   });
 
   ctx.sender_wallet = await ctx.world.createWallet({
-    balance: 100,
+    balance: 1000,
     kvs: [
       e.kvs.Esdts([
         {
