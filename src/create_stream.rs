@@ -19,6 +19,7 @@ pub trait CreateStreamModule:
     + crate::stream_nft::StreamNftModule
     + multiversx_sc_modules::default_issue_callbacks::DefaultIssueCallbacksModule
 {
+    #[allow_multiple_var_args]
     #[payable("*")]
     #[endpoint(createStreamNow)]
     fn create_stream_now(
@@ -41,6 +42,7 @@ pub trait CreateStreamModule:
         )
     }
 
+    #[allow_multiple_var_args]
     #[payable("*")]
     #[endpoint(createStream)]
     fn create_stream(
